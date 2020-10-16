@@ -1,0 +1,27 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/xenial64"
+
+  config.vm.network "forwarded_port", guest: 1433, host: 1433
+
+  config.vm.define "sql-server" do |s|
+    s.vm.provider "virtualbox" do |vb|
+      vb.memory = "4096"
+      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      vb.cpus = "2"
+    end
+
+    config.vm.provision "docker" do |d|
+      d.run "sql-server",
+        image: "mcr.microsoft.com/mssql/server:2019-CU6-ubuntu-16.04",
+        args: "-p '1433:1433' "\
+          "-e ACCEPT_EULA='Y' "\
+          "-e SA_PASSWORD='' "\
+          "-e MSSQL_PID='Developer' "\
+          "-u root "\
+          "-v mssql-data:/var/opt/mssql/data"
+    end
+  end
+end
